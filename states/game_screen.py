@@ -99,7 +99,7 @@ class GameScreen(BaseState):
                 self.bg_x = 0
             
             self.spawner.update(PLAYER_SPEED)
-            self.player.update()
+            self.player.update(dt) 
             
             self._check_collisions()
             self.spawner.cleanup()
