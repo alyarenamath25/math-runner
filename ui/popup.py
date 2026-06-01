@@ -3,6 +3,9 @@ import pygame
 from settings import FONT_PIXEL, FONT_VCR, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, GOLDEN, DARK_NAVY
 from systems.math_engine import generate_question, check_answer
 from ui.button import Button
+import random
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONT_VCR, FONT_PIXEL, DARK_NAVY, GOLDEN, WHITE
+
 class ExitPopup:
     # Setup UI Exit popup
     def __init__(self, game):
@@ -58,9 +61,10 @@ class MathPopup:
         self.game = game
         self.question = None
         
-        self.font_math = pygame.font.Font(FONT_VCR, 48) # teks soal
-        self.font_btn = pygame.font.Font(FONT_VCR, 32) # pilihan jawaban
-        self.font_lbl = pygame.font.Font(FONT_PIXEL, 28) # label instruksi
+        self.font_math = pygame.font.Font(FONT_VCR, 48)  # Teks soal normal
+        self.font_story = pygame.font.Font(FONT_VCR, 24) # Teks khusus soal cerita (lebih kecil agar muat)
+        self.font_btn = pygame.font.Font(FONT_VCR, 32)   # Pilihan jawaban
+        self.font_lbl = pygame.font.Font(FONT_VCR, 28) # Label instruksi
         
         self.overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
         self.overlay.fill((0, 0, 0, 191))
@@ -76,8 +80,91 @@ class MathPopup:
                 self.choice_rects.append(pygame.Rect(rx, ry, 240, 70))
 
     def new_question(self) -> dict:
-        """Generate soal baru dan simpan. Return dict soal."""
-        self.question = generate_question()
+        """Generate soal baru secara acak (bisa soal cerita) berdasarkan skor saat ini."""
+        # Ambil skor pemain secara aman dari game_screen
+        try:
+            current_score = self.game.current_state.score
+        except:
+            current_score = 0
+
+        teks_soal = ""
+        jawaban_benar = 0
+        is_story = False # Penanda apakah soal yang keluar berbentuk soal cerita
+
+        # 1. GENERATOR LOGIKA SOAL (ACAK BERDASARKAN SKOR)
+        if current_score < 50:
+            # --- LEVEL MUDAH ---
+            # Acak apakah mau memunculkan soal matematika biasa atau soal cerita mudah
+            if random.choice([True, False]):
+                a, b = random.randint(1, 20), random.randint(1, 20)
+                operasi = random.choice(['+', '-'])
+                if operasi == '+':
+                    jawaban_benar = a + b
+                else:
+                    if a < b: a, b = b, a
+                    jawaban_benar = a - b
+                teks_soal = f"{a} {operasi} {b} = ?"
+            else:
+                is_story = True
+                a = random.randint(5, 15)
+                b = random.randint(2, 6)
+                cerita_mudah = [
+                    (f"Ryusui punya {a} koin, lalu menemukan {b} koin lagi.\nBerapa total koin Ryusui?", a + b),
+                    (f"Ryusui membawa {a} ramuan, tapi terjatuh {b} botol.\nBerapa sisa ramuan Ryusui?", max(0, a - b))
+                ]
+                teks_soal, jawaban_benar = random.choice(cerita_mudah)
+
+        elif current_score < 150:
+            # --- LEVEL SEDANG ---
+            if random.choice([True, False]):
+                a, b = random.randint(2, 10), random.randint(2, 10)
+                jawaban_benar = a * b
+                teks_soal = f"{a} x {b} = ?"
+            else:
+                is_story = True
+                a = random.randint(2, 5)
+                b = random.randint(4, 10)
+                cerita_sedang = [
+                    (f"Ada {a} gerombolan monster, tiap gerombolan berisi\n{b} monster. Berapa total monster?", a * b),
+                    (f"Ryusui membeli {a} kotak buah misterius.\nTiap kotak berisi {b} koin. Total koin?", a * b)
+                ]
+                teks_soal, jawaban_benar = random.choice(cerita_sedang)
+
+        else:
+            # --- LEVEL SULIT ---
+            if random.choice([True, False]):
+                a, b, c = random.randint(1, 10), random.randint(2, 5), random.randint(1, 10)
+                jawaban_benar = a + (b * c)
+                teks_soal = f"{a} + {b} x {c} = ?"
+            else:
+                is_story = True
+                a = random.randint(20, 50)
+                b = random.randint(2, 4)
+                c = random.randint(5, 10)
+                cerita_sulit = [
+                    (f"Ryusui punya {a} poin. Dia kalah {b} kali dan\ntiap kalah minus {c} poin. Sisa poin?", a - (b * c)),
+                    (f"Sebuah jebakan aktif setiap {b} detik sekali.\nJika aktif {c} kali ditambah {a} detik. Total?", (b * c) + a)
+                ]
+                teks_soal, jawaban_benar = random.choice(cerita_sulit)
+
+        # 2. GENERATOR PILIHAN JAWABAN (DISTRACTOR)
+        choices_set = set()
+        choices_set.add(jawaban_benar)
+        while len(choices_set) < 4:
+            salah = jawaban_benar + random.randint(-5, 5)
+            if salah >= 0 and salah != jawaban_benar:
+                choices_set.add(salah)
+        
+        choices_list = [str(x) for x in choices_set]
+        random.shuffle(choices_list)
+
+        # Simpan ke struktur internal dict agar handle_event dan draw tidak error
+        self.question = {
+            "question": teks_soal,
+            "choices": choices_list,
+            "answer": str(jawaban_benar),
+            "is_story": is_story # Ditambahkan penanda tipe teks
+        }
         return self.question
 
     # Event Klik Math
@@ -85,7 +172,9 @@ class MathPopup:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.question:
             for index, rect in enumerate(self.choice_rects):
                 if rect.collidepoint(event.pos):
-                    if check_answer(self.question, self.question["choices"][index]): return "correct"
+                    # Pengecekan jawaban langsung dilakukan di sini secara lokal
+                    if self.question["choices"][index] == self.question["answer"]: 
+                        return "correct"
                     return "wrong"
         return None
 
@@ -99,10 +188,19 @@ class MathPopup:
         pygame.draw.rect(screen, DARK_NAVY, self.box_rect, border_radius=16)
         pygame.draw.rect(screen, GOLDEN, self.box_rect, 3, border_radius=16)
         
-        # 3. Teks soal VCR OSD Mono 48pt (tampak seperti kalkulator/terminal)
+        # 3. Teks Soal (Dipisah berdasarkan tipe Soal Cerita atau Matematika Biasa)
         cx = self.box_rect.centerx
-        q_surf = self.font_math.render(self.question["question"], True, WHITE)
-        screen.blit(q_surf, q_surf.get_rect(centerx=cx, top=self.box_rect.y + 80))
+        if self.question.get("is_story", False):
+            # Jika soal cerita, pecah teks berdasarkan simbol '\n' agar menjadi 2 baris teks rapi
+            lines = self.question["question"].split('\n')
+            for idx, line in enumerate(lines):
+                q_surf = self.font_story.render(line, True, WHITE)
+                # Teks baris kedua akan digambar sedikit lebih rendah (+30 piksel)
+                screen.blit(q_surf, q_surf.get_rect(centerx=cx, top=self.box_rect.y + 65 + (idx * 30)))
+        else:
+            # Jika soal biasa, render ukuran besar 48pt di tengah seperti kalkulator
+            q_surf = self.font_math.render(self.question["question"], True, WHITE)
+            screen.blit(q_surf, q_surf.get_rect(centerx=cx, top=self.box_rect.y + 80))
         
         # 4. Label instruksi
         hint = self.font_lbl.render("Pilih jawaban yang benar:", True, GOLDEN)
@@ -118,7 +216,7 @@ class MathPopup:
             
             choice_surf = self.font_btn.render(self.question["choices"][i], True, WHITE)
             screen.blit(choice_surf, choice_surf.get_rect(center=rect.center))
-
+            
 class TimesUpPopup:
     # Setup UI Times Up
     def __init__(self, game):
