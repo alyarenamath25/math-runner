@@ -51,7 +51,7 @@ class Player:
                 self.facing_right = False
                 self._animate(dt)
             else:
-                # Jika diam, balikkan ke frame awal (idle)
+                # Jika diam, balikkan ke frame awal
                 self.frame_idx = 0.0
         else:
             self.frame_idx = 0.0
