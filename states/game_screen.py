@@ -48,7 +48,11 @@ class GameScreen(BaseState):
                 self.player.blocked = False
                 self.active_popup = None
                 self.game.audio.play_sfx("assets/sounds/sfx_correct.ogg")
+                
             elif result == "wrong":
+                self.score = max(0, self.score - 5) 
+                self.hud.trigger_flash() 
+                
                 # Soal yang sama muncul ulang, Ryusui tetap stuck
                 self.game.audio.play_sfx("assets/sounds/sfx_wrong.ogg")
             return
@@ -87,13 +91,17 @@ class GameScreen(BaseState):
 
     # Main update loop in-game
     def update(self, dt):
-        if self.active_popup is None and not self.is_paused:
-            
+        self.hud.update(dt)
+
+        # Logika timer game
+        if not self.is_paused and self.active_popup not in ["times_up", "exit"]:
             if self.timer.update(dt):
                 self.timesup_popup.set_score(self.score)
                 self.active_popup = "times_up"
                 return
-                
+
+        # 2. UPDATE RUNNER/GAMEPLAY (hanya jalan jika tidak ada popup dan tidak diklik pause)
+        if self.active_popup is None and not self.is_paused:
             self.bg_x -= PLAYER_SPEED
             if self.bg_x <= -SCREEN_WIDTH: 
                 self.bg_x = 0
@@ -110,15 +118,33 @@ class GameScreen(BaseState):
         from entities.monster import Monster
         
         for obj in self.spawner.objects:
+            # 1. Jika secara kotak tidak bersentuhan sama sekali, abaikan.
             if not self.player.rect.colliderect(obj.rect):
                 continue
                 
+            # 2. Logika untuk Koin
             if isinstance(obj, Coin) and not obj.collected:
                 obj.collected = True
                 self.score += SCORE_COIN
                 self.game.audio.play_sfx("assets/sounds/sfx_coin.ogg")
-            elif isinstance(obj, Monster) and not obj.defeated:
-                obj.defeated = True # tandai segera, cegah double-trigger
+                
+            # 3. Logika untuk Monster
+            elif isinstance(obj, Monster):
+                # Jika monster sudah berhasil dilewati sebelumnya, abaikan tabrakan baru
+                if getattr(obj, 'passed', False) or obj.defeated:
+                    continue
+
+                # obj.rect.top adalah koordinat ujung kepala paling atas si monster.
+                # cek: Apakah posisi kaki bawah Ryusui (self.player.rect.bottom) 
+                # masih berada DI ATAS kepala monster? 
+                # beri toleransi amblas sedikit (10-15 piksel) agar terasa adil secara visual.
+                if self.player.rect.bottom <= obj.rect.top + 12:
+                    # Ryusui sedang berada di udara di atas monster (Baik saat naik maupun turun)
+                    obj.passed = True 
+                    continue 
+
+                # jika menabrak tubuh monster
+                obj.defeated = True 
                 self.player.blocked = True
                 self.current_monster = obj
                 q = self.math_popup.new_question()
@@ -144,7 +170,6 @@ class GameScreen(BaseState):
 
     # Render layer in-game
     def draw(self, screen):
-        # Urutan layer PENTING: background -> objek -> player -> HUD -> popup
         # 1. Background (looping tile)
         screen.blit(self.bg, (self.bg_x, 0))
         screen.blit(self.bg, (self.bg_x + SCREEN_WIDTH, 0))
@@ -155,7 +180,7 @@ class GameScreen(BaseState):
         # 3. Player (Ryusui)
         self.player.draw(screen)
         
-        # 4. HUD (skor & timer selalu di atas semua)
+        # 4. HUD (skor & timer selalu di atas)
         self.hud.draw(screen, self.score, self.timer.get_display())
         
         # 5. Tombol pause & exit
