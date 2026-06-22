@@ -1,4 +1,3 @@
-# main.py
 import pygame, sys
 from settings import *
 from states.home_screen import HomeScreen
@@ -16,7 +15,6 @@ class Game:
         self.clock = pygame.time.Clock()
         self.audio = AudioManager()
 
-        # State machine
         self.current_state = None
         self.states = {
             STATE_HOME: HomeScreen(self),
@@ -51,6 +49,3 @@ class Game:
 if __name__ == "__main__":
     game_instance = Game()
     game_instance.run()
-
-# Run: .venv\Scripts\activate
-# python main.py
