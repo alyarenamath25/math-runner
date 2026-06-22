@@ -21,12 +21,12 @@ def generate_question() -> dict:
     else: 
         b = random.randint(2, 10)
         ans = random.randint(1, 12)
-        a = ans * b  # Memastikan hasil bagi selalu bulat sempurna
+        a = ans * b  #Hasil bagi selalu bulat
         
     op_display = {"x": "x", "/": ":"}
     question_text = f"{a} {op_display.get(op, op)} {b} = ?"
     
-    # Generate jawaban yang salah
+    # Generate jawaban salah
     wrong_answers = set()
     possible_noises = [-5, -3, -2, -1, 1, 2, 3, 5]
     
