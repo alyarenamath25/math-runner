@@ -1,4 +1,3 @@
-# ui/popup.py
 import pygame
 from settings import FONT_PIXEL, FONT_VCR, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, GOLDEN, DARK_NAVY
 from systems.math_engine import generate_question, check_answer
@@ -7,7 +6,6 @@ import random
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FONT_VCR, FONT_PIXEL, DARK_NAVY, GOLDEN, WHITE
 
 class ExitPopup:
-    # Setup UI Exit popup
     def __init__(self, game):
         self.game = game
         self.font_title = pygame.font.Font(FONT_PIXEL, 36)
@@ -20,8 +18,7 @@ class ExitPopup:
         self.box_rect = pygame.Rect(cx - 300, cy - 140, 600, 280)
         self.rect_yes = pygame.Rect(cx - 220, cy + 60, 200, 70)
         self.rect_no = pygame.Rect(cx + 20, cy + 60, 200, 70)
-
-    # Event klik exit    
+ 
     def handle_event(self, event) -> str | None:
         """Return "yes", "no", atau None."""
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -32,31 +29,30 @@ class ExitPopup:
         return None
 
     def draw(self, screen):
-        # 1. Overlay gelap
+        # Overlay
         screen.blit(self.overlay, (0, 0))
         
-        # 2. Kotak popup fill + border golden
+        # Kotak popup fill + border golden
         pygame.draw.rect(screen, DARK_NAVY, self.box_rect, border_radius=16)
         pygame.draw.rect(screen, GOLDEN, self.box_rect, 3, border_radius=16)
         
-        # 3. Teks pertanyaan
+        # Teks pertanyaan
         cx = SCREEN_WIDTH // 2
         cy = SCREEN_HEIGHT // 2
         q = self.font_title.render("Are you sure exit the game?", True, WHITE)
         screen.blit(q, q.get_rect(centerx=cx, centery=cy - 20))
         
-        # 4. Button
+        # Button
         pygame.draw.rect(screen, GOLDEN, self.rect_yes, border_radius=8)
         yes_text = self.font_btn.render("YES", True, WHITE)
         screen.blit(yes_text, yes_text.get_rect(center=self.rect_yes.center))
         
-        # 5. Tombol NO
+        # Tombol NO
         pygame.draw.rect(screen, (100, 80, 40), self.rect_no, border_radius=8)
         no_text = self.font_btn.render("NO", True, WHITE)
         screen.blit(no_text, no_text.get_rect(center=self.rect_no.center))
 
 class MathPopup:
-    # Setup UI Math Popup
     def __init__(self, game):
         self.game = game
         self.question = None
@@ -91,10 +87,8 @@ class MathPopup:
         jawaban_benar = 0
         is_story = False # Penanda apakah soal yang keluar berbentuk soal cerita
 
-        # 1. GENERATOR LOGIKA SOAL (ACAK BERDASARKAN SKOR)
+        # Soal acak berdasarkan skor
         if current_score < 50:
-            # --- LEVEL MUDAH ---
-            # Acak apakah mau memunculkan soal matematika biasa atau soal cerita mudah
             if random.choice([True, False]):
                 a, b = random.randint(1, 20), random.randint(1, 20)
                 operasi = random.choice(['+', '-'])
@@ -115,7 +109,6 @@ class MathPopup:
                 teks_soal, jawaban_benar = random.choice(cerita_mudah)
 
         elif current_score < 150:
-            # --- LEVEL SEDANG ---
             if random.choice([True, False]):
                 a, b = random.randint(2, 10), random.randint(2, 10)
                 jawaban_benar = a * b
@@ -131,7 +124,6 @@ class MathPopup:
                 teks_soal, jawaban_benar = random.choice(cerita_sedang)
 
         else:
-            # --- LEVEL SULIT ---
             if random.choice([True, False]):
                 a, b, c = random.randint(1, 10), random.randint(2, 5), random.randint(1, 10)
                 jawaban_benar = a + (b * c)
@@ -147,7 +139,7 @@ class MathPopup:
                 ]
                 teks_soal, jawaban_benar = random.choice(cerita_sulit)
 
-        # 2. GENERATOR PILIHAN JAWABAN (DISTRACTOR)
+        # Distractor
         choices_set = set()
         choices_set.add(jawaban_benar)
         while len(choices_set) < 4:
@@ -158,7 +150,6 @@ class MathPopup:
         choices_list = [str(x) for x in choices_set]
         random.shuffle(choices_list)
 
-        # Simpan ke struktur internal dict agar handle_event dan draw tidak error
         self.question = {
             "question": teks_soal,
             "choices": choices_list,
@@ -167,12 +158,10 @@ class MathPopup:
         }
         return self.question
 
-    # Event Klik Math
     def handle_event(self, event) -> str | None:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.question:
             for index, rect in enumerate(self.choice_rects):
                 if rect.collidepoint(event.pos):
-                    # Pengecekan jawaban langsung dilakukan di sini secara lokal
                     if self.question["choices"][index] == self.question["answer"]: 
                         return "correct"
                     return "wrong"
@@ -181,32 +170,29 @@ class MathPopup:
     def draw(self, screen):
         if self.question is None: return
         
-        # 1. Overlay
+        # Overlay
         screen.blit(self.overlay, (0, 0))
         
-        # 2. Kotak popup
+        # Kotak popup
         pygame.draw.rect(screen, DARK_NAVY, self.box_rect, border_radius=16)
         pygame.draw.rect(screen, GOLDEN, self.box_rect, 3, border_radius=16)
         
-        # 3. Teks Soal (Dipisah berdasarkan tipe Soal Cerita atau Matematika Biasa)
+        # Teks Soal (Dipisah berdasarkan tipe Soal Cerita atau Matematika Biasa)
         cx = self.box_rect.centerx
         if self.question.get("is_story", False):
-            # Jika soal cerita, pecah teks berdasarkan simbol '\n' agar menjadi 2 baris teks rapi
             lines = self.question["question"].split('\n')
             for idx, line in enumerate(lines):
                 q_surf = self.font_story.render(line, True, WHITE)
-                # Teks baris kedua akan digambar sedikit lebih rendah (+30 piksel)
                 screen.blit(q_surf, q_surf.get_rect(centerx=cx, top=self.box_rect.y + 65 + (idx * 30)))
         else:
-            # Jika soal biasa, render ukuran besar 48pt di tengah seperti kalkulator
             q_surf = self.font_math.render(self.question["question"], True, WHITE)
             screen.blit(q_surf, q_surf.get_rect(centerx=cx, top=self.box_rect.y + 80))
         
-        # 4. Label instruksi
+        # Label instruksi
         hint = self.font_lbl.render("Pilih jawaban yang benar:", True, GOLDEN)
         screen.blit(hint, hint.get_rect(centerx=cx, top=self.box_rect.y + 165))
         
-        # 5. Tombol pilihan jawaban
+        # Tombol pilihan jawaban
         mouse_pos = pygame.mouse.get_pos()
         for i, rect in enumerate(self.choice_rects):
             bg_color = (255, 180, 40) if rect.collidepoint(mouse_pos) else GOLDEN
@@ -218,7 +204,6 @@ class MathPopup:
             screen.blit(choice_surf, choice_surf.get_rect(center=rect.center))
             
 class TimesUpPopup:
-    # Setup UI Times Up
     def __init__(self, game):
         self.game = game
         self.score = 0
@@ -238,7 +223,6 @@ class TimesUpPopup:
     def set_score(self, score: int):
         self.score = score
 
-    # Event klik Times Up
     def handle_event(self, event) -> str | None:
         """Return "play_again", "home", atau None."""
         if self.btn_again.is_clicked(event): 
@@ -251,21 +235,21 @@ class TimesUpPopup:
         cx = SCREEN_WIDTH // 2
         cy = SCREEN_HEIGHT // 2
         
-        # 1. Overlay
+        # Overlay
         screen.blit(self.overlay, (0, 0))
         
-        # 2. Kotak popup
+        # Kotak popup
         pygame.draw.rect(screen, DARK_NAVY, self.box_rect, border_radius=16)
         pygame.draw.rect(screen, GOLDEN, self.box_rect, 3, border_radius=16)
         
-        # 3. Teks "Times Up!"
+        # Teks "Times Up!"
         title = self.font_title.render("Time's Up!", True, GOLDEN)
         screen.blit(title, title.get_rect(centerx=cx, top=self.box_rect.y + 60))
         
-        # 4. Skor akhir
+        # Skor akhir
         score_text = self.font_score.render(f"Score: {self.score:05d}", True, WHITE)
         screen.blit(score_text, score_text.get_rect(centerx=cx, top=self.box_rect.y + 165))
         
-        # 5. Button
+        # Button
         self.btn_again.draw(screen)
         self.btn_home.draw(screen)
