@@ -4,7 +4,6 @@ class GameTimer:
     add_time() digunakan untuk bonus waktu saat jawaban benar.
     """
     def __init__(self, initial_seconds: float):
-        # Kita simpan initial_seconds sebagai batas maksimal waktu
         self.max_time = float(initial_seconds)
         self.reset(initial_seconds)
 
@@ -22,7 +21,6 @@ class GameTimer:
 
     def add_time(self, seconds: float):
         """Tambah waktu bonus (jawaban benar = +3 detik)."""
-        # Menggunakan min() agar waktu tidak melebihi batas max_time game
         self.remaining = min(self.max_time, self.remaining + seconds)
         
         if not self._active and self.remaining > 0:
