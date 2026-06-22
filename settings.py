@@ -15,8 +15,8 @@ FONT_VCR = "assets/fonts/vcr_osd_mono.ttf" # Skor, Timer, Soal Matematika
 
 INITIAL_TIME = 60 # detik
 TIME_BONUS = 3 # detik (bonus jawaban benar)
-SCORE_COIN = 50
-SCORE_MONSTER = 100
+SCORE_COIN = 10
+SCORE_MONSTER = 25
 
 SPAWN_MIN_DIST = 100 # px jarak minimum antar objek
 SPAWN_MAX_DIST = 300 # px jarak maksimum
