@@ -1,4 +1,3 @@
-# states/game_screen.py
 import pygame
 from settings import *
 from states.base_state import BaseState
@@ -34,7 +33,6 @@ class GameScreen(BaseState):
         self._full_reset()
         self.game.audio.play_bgm("assets/sounds/bgm_game.ogg")
 
-    # Logika event in- game
     def handle_event(self, event):
         if self.active_popup == "math":
             result = self.math_popup.handle_event(event)
@@ -68,9 +66,9 @@ class GameScreen(BaseState):
         if self.active_popup == "exit":
             result = self.exit_popup.handle_event(event)
             if result == "yes":
-                self.game.change_state(STATE_HOME) # Keluar ke menu utama jika Yes
+                self.game.change_state(STATE_HOME) 
             elif result == "no":
-                self.active_popup = None # Tutup popup dan kembali ke game jika No
+                self.active_popup = None
             return
 
         if self.active_popup is None:
@@ -89,7 +87,6 @@ class GameScreen(BaseState):
                 self.active_popup = "exit" 
                 return
 
-    # Main update loop in-game
     def update(self, dt):
         self.hud.update(dt)
 
@@ -100,7 +97,7 @@ class GameScreen(BaseState):
                 self.active_popup = "times_up"
                 return
 
-        # 2. UPDATE RUNNER/GAMEPLAY (hanya jalan jika tidak ada popup dan tidak diklik pause)
+        # Update Runner/Gameplay (hanya jalan jika tidak ada popup & tidak diklik pause)
         if self.active_popup is None and not self.is_paused:
             self.bg_x -= PLAYER_SPEED
             if self.bg_x <= -SCREEN_WIDTH: 
@@ -118,39 +115,29 @@ class GameScreen(BaseState):
         from entities.monster import Monster
         
         for obj in self.spawner.objects:
-            # 1. Jika secara kotak tidak bersentuhan sama sekali, abaikan.
             if not self.player.rect.colliderect(obj.rect):
                 continue
                 
-            # 2. Logika untuk Koin
             if isinstance(obj, Coin) and not obj.collected:
                 obj.collected = True
                 self.score += SCORE_COIN
                 self.game.audio.play_sfx("assets/sounds/sfx_coin.ogg")
                 
-            # 3. Logika untuk Monster
             elif isinstance(obj, Monster):
-                # Jika monster sudah berhasil dilewati sebelumnya, abaikan tabrakan baru
                 if getattr(obj, 'passed', False) or obj.defeated:
                     continue
 
-                # obj.rect.top adalah koordinat ujung kepala paling atas si monster.
-                # cek: Apakah posisi kaki bawah Ryusui (self.player.rect.bottom) 
-                # masih berada DI ATAS kepala monster? 
-                # beri toleransi amblas sedikit (10-15 piksel) agar terasa adil secara visual.
                 if self.player.rect.bottom <= obj.rect.top + 12:
-                    # Ryusui sedang berada di udara di atas monster (Baik saat naik maupun turun)
                     obj.passed = True 
                     continue 
 
-                # jika menabrak tubuh monster
+                # Jika menabrak tubuh monster
                 obj.defeated = True 
                 self.player.blocked = True
                 self.current_monster = obj
                 q = self.math_popup.new_question()
                 self.active_popup = "math"
 
-    # Reset sesi
     def _full_reset(self):
         """Reset lengkap untuk Play Again atau kembali ke Home."""
         self.is_paused = False
@@ -168,26 +155,20 @@ class GameScreen(BaseState):
         if hasattr(self, 'btn_pause'):
             self.btn_pause.swap_image("assets/images/ui/btn_pause.png")
 
-    # Render layer in-game
     def draw(self, screen):
-        # 1. Background (looping tile)
         screen.blit(self.bg, (self.bg_x, 0))
         screen.blit(self.bg, (self.bg_x + SCREEN_WIDTH, 0))
         
-        # 2. Spawned objects (koin & monster)
         self.spawner.draw(screen)
         
-        # 3. Player (Ryusui)
         self.player.draw(screen)
         
-        # 4. HUD (skor & timer selalu di atas)
         self.hud.draw(screen, self.score, self.timer.get_display())
         
-        # 5. Tombol pause & exit
         self.btn_pause.draw(screen)
         self.btn_exit.draw(screen)
 
-        # 6. Popup aktif, timer terus jalan
+        # Popup aktif, timer tetap jalan
         if self.active_popup == "math":
             self.math_popup.draw(screen)
         elif self.active_popup == "times_up":
