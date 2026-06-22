@@ -11,20 +11,16 @@ class Spawner:
 
     # Gerakan spawn
     def update(self, speed: int):
-        # Geser seluruh objek ke arah kiri
         for obj in self.objects:
             obj.rect.x -= speed
 
-        # Akumulasi jarak tempuh pergeseran
         self.distance_since_last += speed
         
-        # Penciptaan objek baru jika jarak sudah terpenuhi
         if self.distance_since_last >= self.next_spawn_dist:
             self._spawn_object()
             self.distance_since_last = 0
             self.next_spawn_dist = random.randint(SPAWN_MIN_DIST, SPAWN_MAX_DIST)
 
-    # Factory objek
     def _spawn_object(self):
         from entities.coin import Coin
         from entities.monster import Monster
@@ -38,7 +34,6 @@ class Spawner:
         else:
             self.objects.append(Monster(spawn_x, spawn_y))
 
-    # Pembersihan memori
     def cleanup(self):
         """Buang objek yang sudah melewati batas kiri layar (X < 0) dari memori."""
         self.objects = [obj for obj in self.objects if obj.rect.right > 0]
