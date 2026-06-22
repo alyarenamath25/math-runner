@@ -1,9 +1,8 @@
-# entities/player.py
 import pygame
 from utils import resource_path
 
 class Player:
-    # Setup karakter
+    # Karakter
     def __init__(self, image_path: str, frame_count: int, frame_w: int, frame_h: int, bottomleft: tuple):
         self.frame_count = frame_count
         
@@ -15,28 +14,28 @@ class Player:
             self.run_frames.append(sheet.subsurface(rect_potong))
             
         self.frame_idx = 0.0
-        self.animation_speed = 10.0 # Diubah ke frame per detik agar pas dengan dt
+        self.animation_speed = 10.0 
         self.image = self.run_frames[0]
         
-        # Menggunakan self.rect sebagai posisi aktual yang bisa bergerak fleksibel
+        # Posisi aktual yang bisa bergerak fleksibel
         self.rect = self.image.get_rect(bottomleft=bottomleft)
         
-        # Batas bawah tanah (ground) berdasarkan posisi awal saat spawn
+        # Batas bawah tanah berdasarkan posisi awal saat spawn
         self.ground_y = self.rect.bottom 
         
-        # Variabel Pergerakan & Fisika
+        # Pergerakan
         self.speed = 250         # Kecepatan maju/mundur (pixel per detik)
-        self.gravity = 1200      # Kekuatan gravitasi menarik ke bawah
-        self.jump_speed = -550   # Kecepatan awal loncat (minus artinya ke atas)
+        self.gravity = 1200      # Kekuatan gravitasi
+        self.jump_speed = -550   # Kecepatan awal lompat (minus artinya ke atas)
         self.velocity_y = 0      # Kecepatan vertikal saat ini
         self.is_grounded = True  # Penanda apakah kaki menempel di tanah
         
         self.blocked = False
-        self.facing_right = True # Untuk membalik sprite saat mundur
+        self.facing_right = True
 
-    # Animasi & Pergerakan Fisika
+    # Animasi & Pergerakan
     def update(self, dt: float):
-        # 1. LOGIKA INPUT (MAJU / MUNDUR / LOMPAT)
+        # Maju/Mundur
         if not self.blocked:
             keys = pygame.key.get_pressed()
             
@@ -56,26 +55,24 @@ class Player:
         else:
             self.frame_idx = 0.0
 
-        # 2. LOGIKA FISIKA LOMPAT & GRAVITASI
+        # Lompat & Gravitasi
         keys = pygame.key.get_pressed()
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.is_grounded and not self.blocked:
             self.velocity_y = self.jump_speed
             self.is_grounded = False
 
-        # Terapkan gravitasi sepanjang waktu
         self.velocity_y += self.gravity * dt
         self.rect.y += self.velocity_y * dt
 
-        # Cek Batas Tanah (Agar tidak amblas menembus tanah)
+        # Batas Tanah agar tidak amblas
         if self.rect.bottom >= self.ground_y:
             self.rect.bottom = self.ground_y
             self.velocity_y = 0
             self.is_grounded = True
 
-        # 3. UPDATE SPRITE IMAGE
         current_frame = self.run_frames[int(self.frame_idx)]
         
-        # Balik gambar secara horizontal jika player sedang bergerak ke kiri
+        # Balik gambar horizontal jika player bergerak ke kiri
         if self.facing_right:
             self.image = current_frame
         else:
@@ -87,6 +84,5 @@ class Player:
         if self.frame_idx >= self.frame_count:
             self.frame_idx = 0.0
 
-    # Render frame
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
