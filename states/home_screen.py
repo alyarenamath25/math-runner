@@ -1,4 +1,3 @@
-# states/home_screen.py
 import pygame, sys
 from settings import *
 from states.base_state import BaseState
