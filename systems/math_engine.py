@@ -1,4 +1,5 @@
 import random
+from utils import bubble_sort_choices
 
 def _hitung_faktorial(n: int) -> int:
     """Fungsi Rekursif untuk menghitung faktorial."""
@@ -85,21 +86,10 @@ def generate_question(current_score: int) -> dict:
         if salah >= 0 and salah != jawaban_benar:
             choices_set.add(salah)
             
-    # Konversi set ke list integer untuk diurutkan
-    choices_int = list(choices_set)
+    # Sorting
+    choices_list = [str(x) for x in choices_set]
+    choices_list = bubble_sort_choices(choices_list)
     
-    # Insertion Sort (Ascending)
-    for i in range(1, len(choices_int)):
-        key = choices_int[i]
-        j = i - 1
-        while j >= 0 and choices_int[j] > key:
-            choices_int[j + 1] = choices_int[j]
-            j -= 1
-        choices_int[j + 1] = key
-        
-    # Konversi hasil sorting ke string
-    choices_list = [str(x) for x in choices_int]
-
     return {
         "question": teks_soal,
         "choices": choices_list,

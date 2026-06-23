@@ -2,7 +2,7 @@ import pygame
 from settings import FONT_PIXEL, FONT_VCR, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, GOLDEN, DARK_NAVY
 from systems.math_engine import generate_question
 from ui.button import Button
-import random
+from utils import linear_search_index
 
 class ExitPopup:
     def __init__(self, game):
@@ -83,9 +83,12 @@ class MathPopup:
 
     def handle_event(self, event) -> str | None:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.question:
+            
+            correct_idx = linear_search_index(self.question["choices"], self.question["answer"])
+
             for index, rect in enumerate(self.choice_rects):
                 if rect.collidepoint(event.pos):
-                    if self.question["choices"][index] == self.question["answer"]: 
+                    if index == correct_idx: 
                         return "correct"
                     return "wrong"
         return None

@@ -10,6 +10,7 @@ def draw_shadowed_text(surface, font, text, color, shadow_color, pos, shadow_off
 def resource_path(relative_path: str) -> str:
     base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
     return os.path.join(base_path, relative_path)
+
 def bubble_sort_choices(array: list) -> list:
     """
     Materi: Sorting (Bubble Sort)
