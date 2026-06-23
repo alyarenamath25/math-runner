@@ -33,7 +33,8 @@ class HomeScreen(BaseState):
             return
 
         if self.btn_start.is_clicked(event):
-            self.game.change_state(STATE_GAME)
+            self.game.change_state(STATE_STORY)
+            return
 
         if self.btn_sound.is_clicked(event):
             self.game.audio.toggle()

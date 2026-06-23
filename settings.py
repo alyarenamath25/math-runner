@@ -26,6 +26,7 @@ GROUND_Y_RYUSUI = int(SCREEN_HEIGHT * 0.865)
 GROUND_Y_OBJECT = int(SCREEN_HEIGHT * 0.85)
 
 STATE_HOME = "home"
+STATE_STORY = "story"
 STATE_GAME = "game"
 
 SPAWN_POOL = ["coin", "coin", "coin", "monster", "monster"]

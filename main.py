@@ -1,6 +1,7 @@
 import pygame, sys
 from settings import *
 from states.home_screen import HomeScreen
+from states.story_screen import StoryScreen
 from states.game_screen import GameScreen
 from systems.audio_manager import AudioManager
 
@@ -18,6 +19,7 @@ class Game:
         self.current_state = None
         self.states = {
             STATE_HOME: HomeScreen(self),
+            STATE_STORY: StoryScreen(self),
             STATE_GAME: GameScreen(self),
         }
         self.change_state(STATE_HOME)
