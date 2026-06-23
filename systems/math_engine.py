@@ -1,15 +1,14 @@
 import random
 
 def _hitung_faktorial(n: int) -> int:
-    """Fungsi Rekursif untuk menghitung faktorial (Konsep Recursion)."""
+    """Fungsi Rekursif untuk menghitung faktorial."""
     if n <= 1:
         return 1
     return n * _hitung_faktorial(n - 1)
 
 def generate_question(current_score: int) -> dict:
     """
-    Hasilkan satu soal matematika berjenjang berdasarkan skor (Function & String).
-    Return dict berisi pertanyaan, pilihan ganda, dan jawaban.
+    Hasilkan satu soal matematika berjenjang berdasarkan skor.
     """
     teks_soal = ""
     jawaban_benar = 0
@@ -52,7 +51,7 @@ def generate_question(current_score: int) -> dict:
             ]
             teks_soal, jawaban_benar = random.choice(cerita_sedang)
 
-    # Level 3: Sulit (Skor >= 150) -> Menambahkan Rekursi Faktorial
+    # Level 3: Sulit (Skor >= 150)
     else:
         tipe_soal = random.choice(["kombinasi", "cerita", "faktorial"])
         
@@ -78,7 +77,7 @@ def generate_question(current_score: int) -> dict:
             jawaban_benar = _hitung_faktorial(a) 
             teks_soal = f"{a}! = ?"
 
-    # Membangun Distractor (Jawaban Salah)
+    # Opsi jawaban salah
     choices_set = set()
     choices_set.add(jawaban_benar)
     while len(choices_set) < 4:
@@ -89,7 +88,7 @@ def generate_question(current_score: int) -> dict:
     # Konversi set ke list integer untuk diurutkan
     choices_int = list(choices_set)
     
-    # KONSEP SORTING: Algoritma Insertion Sort (Ascending)
+    # Insertion Sort (Ascending)
     for i in range(1, len(choices_int)):
         key = choices_int[i]
         j = i - 1
