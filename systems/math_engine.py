@@ -1,47 +1,109 @@
 import random
 
-# Generate soal acak
-def generate_question() -> dict:
-    """
-    Hasilkan satu soal matematika dengan 4 pilihan ganda.
-    Return: {"question": str, "answer": int, "choices": list[str]}
-    """
-    op = random.choice(["+", "-", "x", "/"])
-    
-    if op == "+":
-        a, b = random.randint(1, 50), random.randint(1, 50)
-        ans = a + b
-    elif op == "-":
-        a = random.randint(10, 99)
-        b = random.randint(1, a)
-        ans = a - b
-    elif op == "x":
-        a, b = random.randint(2, 12), random.randint(2, 12)
-        ans = a * b
-    else: 
-        b = random.randint(2, 10)
-        ans = random.randint(1, 12)
-        a = ans * b  #Hasil bagi selalu bulat
-        
-    op_display = {"x": "x", "/": ":"}
-    question_text = f"{a} {op_display.get(op, op)} {b} = ?"
-    
-    # Generate jawaban salah
-    wrong_answers = set()
-    possible_noises = [-5, -3, -2, -1, 1, 2, 3, 5]
-    
-    while len(wrong_answers) < 3:
-        noise = random.choice(possible_noises)
-        candidate = ans + noise
-        if candidate > 0 and candidate != ans:
-            wrong_answers.add(candidate)
-        
-    choices = [str(ans)] + [str(w) for w in list(wrong_answers)[:3]]
-    random.shuffle(choices)
-    
-    return {"question": question_text, "answer": ans, "choices": choices}
+def _hitung_faktorial(n: int) -> int:
+    """Fungsi Rekursif untuk menghitung faktorial (Konsep Recursion)."""
+    if n <= 1:
+        return 1
+    return n * _hitung_faktorial(n - 1)
 
-# Cek jawaban
-def check_answer(question: dict, player_answer: str) -> bool:
-    """Return True jika jawaban benar."""
-    return str(question["answer"]) == player_answer.strip()
+def generate_question(current_score: int) -> dict:
+    """
+    Hasilkan satu soal matematika berjenjang berdasarkan skor (Function & String).
+    Return dict berisi pertanyaan, pilihan ganda, dan jawaban.
+    """
+    teks_soal = ""
+    jawaban_benar = 0
+    is_story = False
+
+    # Level 1: Mudah (Skor < 50)
+    if current_score < 50:
+        if random.choice([True, False]):
+            a, b = random.randint(1, 20), random.randint(1, 20)
+            operasi = random.choice(['+', '-'])
+            if operasi == '+':
+                jawaban_benar = a + b
+            else:
+                if a < b: a, b = b, a
+                jawaban_benar = a - b
+            teks_soal = f"{a} {operasi} {b} = ?"
+        else:
+            is_story = True
+            a = random.randint(5, 15)
+            b = random.randint(2, 6)
+            cerita_mudah = [
+                (f"Ryusui punya {a} koin, lalu menemukan {b} koin lagi.\nBerapa total koin Ryusui?", a + b),
+                (f"Ryusui membawa {a} ramuan, tapi terjatuh {b} botol.\nBerapa sisa ramuan Ryusui?", max(0, a - b))
+            ]
+            teks_soal, jawaban_benar = random.choice(cerita_mudah)
+
+    # Level 2: Sedang (Skor 50 - 149)
+    elif current_score < 150:
+        if random.choice([True, False]):
+            a, b = random.randint(2, 10), random.randint(2, 10)
+            jawaban_benar = a * b
+            teks_soal = f"{a} x {b} = ?"
+        else:
+            is_story = True
+            a = random.randint(2, 5)
+            b = random.randint(4, 10)
+            cerita_sedang = [
+                (f"Ada {a} gerombolan monster, tiap gerombolan berisi\n{b} monster. Berapa total monster?", a * b),
+                (f"Ryusui membeli {a} kotak buah misterius.\nTiap kotak berisi {b} koin. Total koin?", a * b)
+            ]
+            teks_soal, jawaban_benar = random.choice(cerita_sedang)
+
+    # Level 3: Sulit (Skor >= 150) -> Menambahkan Rekursi Faktorial
+    else:
+        tipe_soal = random.choice(["kombinasi", "cerita", "faktorial"])
+        
+        if tipe_soal == "kombinasi":
+            a, b, c = random.randint(1, 10), random.randint(2, 5), random.randint(1, 10)
+            jawaban_benar = a + (b * c)
+            teks_soal = f"{a} + {b} x {c} = ?"
+            
+        elif tipe_soal == "cerita":
+            is_story = True
+            a = random.randint(20, 50)
+            b = random.randint(2, 4)
+            c = random.randint(5, 10)
+            cerita_sulit = [
+                (f"Ryusui punya {a} poin. Dia kalah {b} kali dan\ntiap kalah minus {c} poin. Sisa poin?", a - (b * c)),
+                (f"Sebuah jebakan aktif setiap {b} detik sekali.\nJika aktif {c} kali ditambah {a} detik. Total?", (b * c) + a)
+            ]
+            teks_soal, jawaban_benar = random.choice(cerita_sulit)
+            
+        else: # Faktorial
+            is_story = False
+            a = random.randint(3, 5) # Batasi 5! agar tidak over (120)
+            jawaban_benar = _hitung_faktorial(a) 
+            teks_soal = f"{a}! = ?"
+
+    # Membangun Distractor (Jawaban Salah)
+    choices_set = set()
+    choices_set.add(jawaban_benar)
+    while len(choices_set) < 4:
+        salah = jawaban_benar + random.randint(-5, 5)
+        if salah >= 0 and salah != jawaban_benar:
+            choices_set.add(salah)
+            
+    # Konversi set ke list integer untuk diurutkan
+    choices_int = list(choices_set)
+    
+    # KONSEP SORTING: Algoritma Insertion Sort (Ascending)
+    for i in range(1, len(choices_int)):
+        key = choices_int[i]
+        j = i - 1
+        while j >= 0 and choices_int[j] > key:
+            choices_int[j + 1] = choices_int[j]
+            j -= 1
+        choices_int[j + 1] = key
+        
+    # Konversi hasil sorting ke string
+    choices_list = [str(x) for x in choices_int]
+
+    return {
+        "question": teks_soal,
+        "choices": choices_list,
+        "answer": str(jawaban_benar),
+        "is_story": is_story 
+    }

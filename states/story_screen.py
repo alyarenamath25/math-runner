@@ -209,7 +209,7 @@ class StoryScreen(BaseState):
                 else:
                     self._advance_page()
             if event.key == pygame.K_ESCAPE:
-                self.show_exit = True
+                self._start_game()
 
     def update(self, dt):
         

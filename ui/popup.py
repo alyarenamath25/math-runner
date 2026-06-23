@@ -1,6 +1,6 @@
 import pygame
 from settings import FONT_PIXEL, FONT_VCR, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE, GOLDEN, DARK_NAVY
-from systems.math_engine import generate_question, check_answer
+from systems.math_engine import generate_question
 from ui.button import Button
 import random
 
@@ -57,10 +57,10 @@ class MathPopup:
         self.game = game
         self.question = None
         
-        self.font_math = pygame.font.Font(FONT_VCR, 48)  # Teks soal normal
-        self.font_story = pygame.font.Font(FONT_VCR, 24) # Teks khusus soal cerita (lebih kecil agar muat)
-        self.font_btn = pygame.font.Font(FONT_VCR, 32)   # Pilihan jawaban
-        self.font_lbl = pygame.font.Font(FONT_VCR, 28) # Label instruksi
+        self.font_math = pygame.font.Font(FONT_VCR, 48)
+        self.font_story = pygame.font.Font(FONT_VCR, 24)
+        self.font_btn = pygame.font.Font(FONT_VCR, 32)
+        self.font_lbl = pygame.font.Font(FONT_VCR, 28)
         
         self.overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
         self.overlay.fill((0, 0, 0, 191))
@@ -75,92 +75,10 @@ class MathPopup:
                 ry = self.box_rect.y + 230 + (row * 90)
                 self.choice_rects.append(pygame.Rect(rx, ry, 240, 70))
 
-    def new_question(self) -> dict:
-        """Generate soal baru secara acak (bisa soal cerita) berdasarkan skor saat ini."""
-        try:
-            current_score = self.game.current_state.score
-        except:
-            current_score = 0
-
-        teks_soal = ""
-        jawaban_benar = 0
-        is_story = False 
-
-        # Soal Acak berdasarkan skor
-        if current_score < 50:
-            if random.choice([True, False]):
-                a, b = random.randint(1, 20), random.randint(1, 20)
-                operasi = random.choice(['+', '-'])
-                if operasi == '+':
-                    jawaban_benar = a + b
-                else:
-                    if a < b: a, b = b, a
-                    jawaban_benar = a - b
-                teks_soal = f"{a} {operasi} {b} = ?"
-            else:
-                is_story = True
-                a = random.randint(5, 15)
-                b = random.randint(2, 6)
-                cerita_mudah = [
-                    (f"Ryusui punya {a} koin, lalu menemukan {b} koin lagi.\nBerapa total koin Ryusui?", a + b),
-                    (f"Ryusui membawa {a} ramuan, tapi terjatuh {b} botol.\nBerapa sisa ramuan Ryusui?", max(0, a - b))
-                ]
-                teks_soal, jawaban_benar = random.choice(cerita_mudah)
-
-        elif current_score < 150:
-            if random.choice([True, False]):
-                a, b = random.randint(2, 10), random.randint(2, 10)
-                jawaban_benar = a * b
-                teks_soal = f"{a} x {b} = ?"
-            else:
-                is_story = True
-                a = random.randint(2, 5)
-                b = random.randint(4, 10)
-                cerita_sedang = [
-                    (f"Ada {a} gerombolan monster, tiap gerombolan berisi\n{b} monster. Berapa total monster?", a * b),
-                    (f"Ryusui membeli {a} kotak buah misterius.\nTiap kotak berisi {b} koin. Total koin?", a * b)
-                ]
-                teks_soal, jawaban_benar = random.choice(cerita_sedang)
-
-        else:
-            if random.choice([True, False]):
-                a, b, c = random.randint(1, 10), random.randint(2, 5), random.randint(1, 10)
-                jawaban_benar = a + (b * c)
-                teks_soal = f"{a} + {b} x {c} = ?"
-            else:
-                is_story = True
-                a = random.randint(20, 50)
-                b = random.randint(2, 4)
-                c = random.randint(5, 10)
-                cerita_sulit = [
-                    (f"Ryusui punya {a} poin. Dia kalah {b} kali dan\ntiap kalah minus {c} poin. Sisa poin?", a - (b * c)),
-                    (f"Sebuah jebakan aktif setiap {b} detik sekali.\nJika aktif {c} kali ditambah {a} detik. Total?", (b * c) + a)
-                ]
-                teks_soal, jawaban_benar = random.choice(cerita_sulit)
-
-        # Distractor
-        choices_set = set()
-        choices_set.add(jawaban_benar)
-        while len(choices_set) < 4:
-            salah = jawaban_benar + random.randint(-5, 5)
-            if salah >= 0 and salah != jawaban_benar:
-                choices_set.add(salah)
+    def new_question(self, current_score: int) -> dict:
+        """Meminta soal baru dari math_engine berdasarkan skor pemain."""
         
-        choices_list = [str(x) for x in choices_set]
-        
-        # Mengurutkan pilihan jawaban dari angka terkecil ke terbesar
-        choices_list = bubble_sort_choices(choices_list)
-        
-        # Mencari di indeks ke berapa kunci jawaban benar berada setelah diurutkan
-        indeks_benar = linear_search_index(choices_list, str(jawaban_benar))
-
-        self.question = {
-            "question": teks_soal,
-            "choices": choices_list,
-            "answer": str(jawaban_benar),
-            "is_story": is_story,
-            "correct_index": indeks_benar 
-        }
+        self.question = generate_question(current_score)
         return self.question
 
     def handle_event(self, event) -> str | None:
@@ -206,8 +124,7 @@ class MathPopup:
             pygame.draw.rect(screen, WHITE, rect, 2, border_radius=8)
             
             choice_surf = self.font_btn.render(self.question["choices"][i], True, WHITE)
-            screen.blit(choice_surf, choice_surf.get_rect(center=rect.center))
-            
+            screen.blit(choice_surf, choice_surf.get_rect(center=rect.center))            
 
 class TimesUpPopup:
     def __init__(self, game):

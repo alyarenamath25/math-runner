@@ -135,7 +135,7 @@ class GameScreen(BaseState):
                 obj.defeated = True 
                 self.player.blocked = True
                 self.current_monster = obj
-                q = self.math_popup.new_question()
+                q = self.math_popup.new_question(self.score)
                 self.active_popup = "math"
 
     def _full_reset(self):
