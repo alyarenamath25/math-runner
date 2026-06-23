@@ -1,10 +1,9 @@
-# ui/button.py
 import pygame
 
 class Button:
     """Tombol yang di-render dari gambar PNG (aset dari Figma)."""
 
-    #Setup gambar dan skala
+    #Gambar dan skala
     def __init__(self, image_path: str, center: tuple, scale: float = 1.0):
         img = pygame.image.load(image_path).convert_alpha()
         if scale != 1.0:
