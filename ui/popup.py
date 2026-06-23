@@ -147,13 +147,19 @@ class MathPopup:
                 choices_set.add(salah)
         
         choices_list = [str(x) for x in choices_set]
-        random.shuffle(choices_list)
+        
+        # Mengurutkan pilihan jawaban dari angka terkecil ke terbesar
+        choices_list = bubble_sort_choices(choices_list)
+        
+        # Mencari di indeks ke berapa kunci jawaban benar berada setelah diurutkan
+        indeks_benar = linear_search_index(choices_list, str(jawaban_benar))
 
         self.question = {
             "question": teks_soal,
             "choices": choices_list,
             "answer": str(jawaban_benar),
-            "is_story": is_story 
+            "is_story": is_story,
+            "correct_index": indeks_benar 
         }
         return self.question
 
